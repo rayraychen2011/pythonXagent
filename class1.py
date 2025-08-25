@@ -88,27 +88,41 @@ while True:
     mouse_x, mouse_y = pygame.mouse.get_pos()
     # print(f"滑鼠座標：({mouse_x}, {mouse_y})")
 
-    # 畫筆與橡皮擦功能
-    # - 左鍵按住：畫筆 (黑色圓圈)
-    # - 右鍵按住：橡皮擦 (用背景色畫圓)
-    # 為了讓筆畫更連續，會記錄上一個位置並用寬線連接
-    brush_radius = 8
-    brush_color = (0, 0, 0)
-    # 使用全域變數 last_pos 存放上一個座標，若不存在則建立
+    # 畫筆與橡皮擦功能說明：
+    # - 當滑鼠左鍵按住時，以畫筆顏色在畫布 `bg` 上繪製圓點/線段，達成連續繪製效果。
+    # - 當滑鼠右鍵按住時，使用畫布背景色（`bg_color`）繪製，模擬橡皮擦效果。
+    # - 為了避免繪製出斷裂的點，會記錄上一個滑鼠座標 `last_pos`，若存在則用寬線連接
+    #   上一個座標與目前座標；若不存在則只畫單一圓形（起始點或斷開時）。
+    # 變數說明：
+    # - `brush_radius`：筆刷半徑（像素）。
+    # - `brush_color`：畫筆顏色（RGB）。
+    # - `bg_color`：畫布背景色，橡皮擦會使用此顏色來清除痕跡。
+    # - `last_pos`：上一個滑鼠座標，用於連線繪製；當沒有按鍵時會清除以避免跨段連線。
+    # - `mouse_buttons`：由 `pygame.mouse.get_pressed()` 回傳的布林三元組，表示 (左, 中, 右) 按鍵是否按住。
+
+    brush_radius = 8  # 可改成更大/更小調整筆寬
+    brush_color = (0, 0, 0)  # 畫筆預設為黑色
+
+    # 確認是否已有 last_pos 變數（首次會建立）
     try:
         last_pos
     except NameError:
         last_pos = None
 
+    # 取得目前按鍵狀態 (左, 中, 右)
     mouse_buttons = pygame.mouse.get_pressed()
-    # 優先處理左鍵 (畫筆)，再處理右鍵 (橡皮擦)
+
+    # 若左鍵按住 => 畫筆
     if mouse_buttons[0]:
         color = brush_color
+        # 若沒有上一個位置，畫一個圓表示起點；若有，畫一條寬線連接，讓筆跡看起來連續
         if last_pos is None:
             pygame.draw.circle(bg, color, (mouse_x, mouse_y), brush_radius)
         else:
             pygame.draw.line(bg, color, last_pos, (mouse_x, mouse_y), brush_radius * 2)
         last_pos = (mouse_x, mouse_y)
+
+    # 若右鍵按住 => 橡皮擦 (用背景色繪製)
     elif mouse_buttons[2]:
         color = bg_color
         if last_pos is None:
@@ -116,6 +130,8 @@ while True:
         else:
             pygame.draw.line(bg, color, last_pos, (mouse_x, mouse_y), brush_radius * 2)
         last_pos = (mouse_x, mouse_y)
+
+    # 沒有按鍵時，清除 last_pos 以避免下一次按住時跨段連線
     else:
         last_pos = None
 
